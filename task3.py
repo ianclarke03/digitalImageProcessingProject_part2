@@ -1,66 +1,101 @@
-# Part 3: Annotation Hiding (third team member)
-# In this part of the project, you will develop a technique to embed annotations in the images. The annotations
-# must be hidden within the image in such a way that the visual appearance of the image is not significantly
-# altered.
-# 3
-
-# 3.1 Embedding Annotations
-# The goal is to hide the annotation within each of the 10 images used in Part 1 and Part 2. The annotation
-# should be embedded in the image using a suitable image processing technique, such as:
-# • Least Significant Bit (LSB) Embedding: Embed the annotation in the least significant bits of the
-# image pixels, ensuring minimal visual disruption.
-
-# 3.2 Evaluation
-# Evaluate the effectiveness of the annotation hiding technique by checking the following criteria:
-# • Visual Impact: The image should not show visible signs of annotation presence after embedding.
-# • Reversibility: Ensure that the annotation can be extracted from the image with minimal loss. Need
-# an embedding extraction step to extract the annotations in the LSB back to its original text. Hint:
-# Binary (base 2) to decimal (base 10) and to text (using ASCII).
-# For each group (composed of three students), apply the annotation hiding technique to the 10 images
-# and present the results.
-
 import numpy as np
 import cv2
 import matplotlib.pyplot as plt
 
+# List of 10 dummy images as placeholders
+image_paths = [f"dog copy {i}.png" for i in range(1, 5)]
 
+# Function to embed an annotation into an image
+def embed(original_image, annotation):
+    binary_string = ''.join([format(ord(char), '08b') for char in annotation])
 
+    # Extract all bit planes
+    rows, cols = original_image.shape
+    bit_planes = np.zeros((rows, cols, 8), dtype=np.uint8)
 
+    for i in range(8):
+        bit_planes[:, :, i] = (original_image >> i) & 1
 
-#Hide the annotation within the images
+    # Zero out the LSB (bit plane 0)
+    bit_planes[:, :, 0] = 0
 
-image_path = 'tumor.png'
-original_image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
-original_image = original_image.astype(np.uint8)
+    # Embed binary_string into the LSB bit plane
+    num_bits = len(binary_string)
+    if num_bits > rows * cols:
+        raise ValueError('The image is too small to hide the annotation.')
 
-# Convert the annotation text to binary and combine each char into one long binary string
-text = "This is an annotation"
-words = text.split()
-binary_string = ''.join([format(ord(char), '08b') for char in text])
+    for i in range(num_bits):
+        row = i // cols
+        col = i % cols
+        # Embed each bit of the binary string into the LSB
+        bit_planes[row, col, 0] = int(binary_string[i])
 
+    # Recompose the image from the modified bit planes
+    recomposed_image = np.zeros((rows, cols), dtype=np.uint8)
+    for i in range(8):
+        recomposed_image += bit_planes[:, :, i] * (2**i)
 
-#Extract all bit planes
-rows, cols = original_image.shape
-bit_planes = np.zeros((rows, cols, 8), dtype=np.uint8)
+    return recomposed_image
 
-for i in range(8):
-    bit_planes[:,:,i] = (original_image >> i) & 1
+# Function to extract the annotation from a recomposed image
+def extract(recomposed_image, annotation_length):
+    rows, cols = recomposed_image.shape
+    num_bits = annotation_length * 8  # Each character is 8 bits
+    binary_string = ""
 
-# Zero out the LSB (bit plane 0)
-bit_planes[:,:,0] = 0
+    for i in range(num_bits):
+        row = i // cols
+        col = i % cols
+        binary_string += str(recomposed_image[row, col] & 1) # Extract Binary String from LSB
 
-# Embed binary_string into the LSB bit plane
-num_bits = len(binary_string)
-if num_bits > rows * cols:
-    raise ValueError('The image is too small to hide the annotation.')
+    # Convert binary string back to text
+    annotation = "".join(
+        chr(int(binary_string[i:i+8], 2)) for i in range(0, len(binary_string), 8)
+    )
+    return annotation
 
-for i in range(num_bits):
-    row = i // cols
-    col = i % cols
-    # Embed each bit of the binary string into the LSB
-    bit_planes[row, col, 0] = int(binary_string[i])
+# Loop over the images, process them, and evaluate the results
+# Convert Binary to Decimal (Base 10):  int(binary_string[i:i+8], 2)
+# Convert Decimal to Text: chr(int(binary_string[i:i+8], 2))
 
+annotation = "This is an annotation"
+for image_path in image_paths:
+    original_image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+    if original_image is None:
+        print(f"Image {image_path} not found. Skipping.")
+        continue
+    
+    # Embed the annotation
+    recomposed_image = embed(original_image, annotation)
+    
+    # Extract the annotation
+    extracted_annotation = extract(recomposed_image, len(annotation))
+    
+    # Display the original and modified image
+    plt.figure(figsize=(12, 6))
+    plt.subplot(1, 2, 1)
+    plt.imshow(original_image, cmap="gray")
+    plt.title(f"Original Image: {image_path}")
+    plt.axis("off")
 
+    plt.subplot(1, 2, 2)
+    plt.imshow(recomposed_image, cmap="gray")
+    plt.title(f"Recomposed Image: {image_path}")
+    plt.axis("off")
+    plt.tight_layout()
+    plt.show()
 
+    # Evaluation results
+    print(f"Original Annotation: {annotation}")
+    print(f"Extracted Annotation: {extracted_annotation}")
+    if annotation == extracted_annotation:
+        print(f"Annotation successfully embedded and extracted from {image_path}.\n")
+    else:
+        print(f"Error in annotation extraction for {image_path}.\n")
 
-#extract the annotation from the images with minimal loss
+    plt.subplot(1, 2, 1)
+    plt.imshow(recomposed_image, cmap="gray")
+    plt.title(f"Image Post Extraction: {image_path}")
+    plt.axis("off")
+    plt.tight_layout()
+    plt.show()
