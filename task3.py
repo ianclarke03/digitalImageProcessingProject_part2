@@ -3,7 +3,7 @@ import cv2
 import matplotlib.pyplot as plt
 
 # List of 10 dummy images as placeholders
-image_paths = [f"dog copy {i}.png" for i in range(1, 5)]
+image_paths = [f"tumor{i}.png" for i in range(0, 10)]
 
 # Function to embed an annotation into an image
 def embed(original_image, annotation):
