@@ -1,11 +1,30 @@
 #wanted me use different kinds of tumor images, and embed the type of image into it. He also wanted to see the contents of the LSB?
 
+import os
 import numpy as np
 import cv2
 import matplotlib.pyplot as plt
+    
+
+
+# Explicitly point to the 'task3_tumor_images' directory
+image_folder = "task3_tumor_images"
+
+# Ensure correct paths to images in the folder
+image_paths = [os.path.join(image_folder, filename) 
+               for filename in os.listdir(image_folder) 
+               if filename.endswith('.png')]
+
+print("Images to process:", image_paths)  # Debugging line
+
+
+
+
+
+
 
 # List of 10 dummy images as placeholders
-image_paths = [f"tumor{i}.png" for i in range(0, 10)]
+#image_paths = [f"tumor{i}.png" for i in range(0, 10)]
 
 # Function to embed an annotation into an image
 def embed(original_image, annotation):
@@ -69,21 +88,35 @@ def extract(recomposed_image, annotation_length):
 # Loop over the images, process them, and evaluate the results
 # Convert Binary to Decimal (Base 10):  int(binary_string[i:i+8], 2)
 # Convert Decimal to Text: chr(int(binary_string[i:i+8], 2))
-
-annotation = "This is an annotation"
 for image_path in image_paths:
     original_image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
     if original_image is None:
         print(f"Image {image_path} not found. Skipping.")
         continue
-    
-    # Embed the annotation
+
+    # Determine annotation based on the file name
+    if "giloma" in image_path.lower():
+        annotation = "This is a giloma tumor"
+    elif "meningioma" in image_path.lower():
+        annotation = "This is a meningioma tumor"
+    elif "pituitary" in image_path.lower():
+        annotation = "This is a pituitary tumor"
+    elif "notumor" in image_path.lower():
+        annotation = "This is not a tumor"
+    else:
+        annotation = "Unknown tumor type"
+
+    # Debug: Print annotation for each image
+    print(f"Embedding annotation for {image_path}: {annotation}")
+
+    # Embed the annotation into the image
     recomposed_image = embed(original_image, annotation)
-    
-    # Extract the annotation
+
+    # Extract the annotation to verify correctness
     extracted_annotation = extract(recomposed_image, len(annotation))
-    
-    # Display the original and modified image
+    print(f"Extracted annotation: {extracted_annotation}")
+
+    # Display the images (optional, remove if not needed)
     plt.figure(figsize=(12, 6))
     plt.subplot(1, 2, 1)
     plt.imshow(original_image, cmap="gray")
@@ -94,9 +127,16 @@ for image_path in image_paths:
     plt.imshow(recomposed_image, cmap="gray")
     plt.title(f"Recomposed Image: {image_path}")
     plt.axis("off")
+
     plt.tight_layout()
     plt.show()
 
+
+     # Extract the annotation
+    extracted_annotation = extract(recomposed_image, len(annotation))
+    
+    
+    
     # Evaluation results
     print(f"Original Annotation: {annotation}")
     print(f"Extracted Annotation: {extracted_annotation}")
