@@ -1,5 +1,3 @@
-#wanted me use different kinds of tumor images, and embed the type of image into it. He also wanted to see the contents of the LSB?
-
 import os
 import numpy as np
 import cv2
