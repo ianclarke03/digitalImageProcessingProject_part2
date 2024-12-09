@@ -1,3 +1,5 @@
+#wanted me use different kinds of tumor images, and embed the type of image into it. He also wanted to see the contents of the LSB?
+
 import numpy as np
 import cv2
 import matplotlib.pyplot as plt
@@ -13,8 +15,13 @@ def embed(original_image, annotation):
     rows, cols = original_image.shape
     bit_planes = np.zeros((rows, cols, 8), dtype=np.uint8)
 
+    # Print the LSB of the original image
+    print("LSB of Original Image (Before Embedding):")
+    print(bit_planes[:, :, 0])
+
     for i in range(8):
         bit_planes[:, :, i] = (original_image >> i) & 1
+        # print(bit_planes[:,:,0])
 
     # Zero out the LSB (bit plane 0)
     bit_planes[:, :, 0] = 0
@@ -23,6 +30,7 @@ def embed(original_image, annotation):
     num_bits = len(binary_string)
     if num_bits > rows * cols:
         raise ValueError('The image is too small to hide the annotation.')
+    
 
     for i in range(num_bits):
         row = i // cols
@@ -34,6 +42,10 @@ def embed(original_image, annotation):
     recomposed_image = np.zeros((rows, cols), dtype=np.uint8)
     for i in range(8):
         recomposed_image += bit_planes[:, :, i] * (2**i)
+
+    # Print the LSB of the recomposed image
+    print("LSB After Embedding:")
+    print(recomposed_image & 1)  # Extract and print the LSB
 
     return recomposed_image
 
